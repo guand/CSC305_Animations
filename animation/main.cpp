@@ -40,7 +40,11 @@ void display(){
     wingR_M *= Eigen::AlignedScaling3f(.5, .5, 1.0);
     wingR_M *= Eigen::Affine3f(Eigen::AngleAxisf(M_PI/2.0, vec3::UnitZ())).matrix();
     wingR.draw(wingR_M.matrix());
-
+    Transform wingL_M = Transform::Identity();
+    wingL_M *= Eigen::Translation3f(-1.5, 1.0, 0.0);
+    wingL_M *= Eigen::AlignedScaling3f(.5, .5, 1.0);
+    wingL_M *= Eigen::Affine3f(Eigen::AngleAxisf(M_PI/-2.0, vec3::UnitZ())).matrix();
+    wingL.draw(wingL_M.matrix());
 
 }
 
