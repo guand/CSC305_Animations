@@ -10,7 +10,8 @@ Quad background;
 Quad foreground;
 static const float SpeedFactor = 1;
 // TODO: declare Framebuffer + ScreenQuad (see slides)
-
+FrameBuffer fb(width, height);
+ScreenQuad squad;
 
 void init(){
     glClearColor(1,1,1, /*solid*/1.0 );
@@ -19,13 +20,27 @@ void init(){
 
     // TODO: initialize framebuffer (see slides)
     // TODO: initialize fullscreen quad (see slides)
+    GLuint fb_tex = fb.init();
+    squad.init(fb_tex);
 
 }
 
 void drawScene(float timeCount)
 {
     //TODO: Draw the animation you want
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    float t = timeCount * SpeedFactor;
+    Transform TRS = Transform::Identity();
+    background.draw(TRS.matrix());
+    float xcord = 0.7*std::cos(t);
+    float ycord = 0.7*std::sin(t);
 
+    TRS *= Eigen::Translation3f(xcord, ycord, 0);
+    TRS *= Eigen::AngleAxisf(t + M_PI / 2, Eigen::Vector3f::UnitZ());
+    TRS *= Eigen::AlignedScaling3f(0.285, 0.2, 1);
+    foreground.draw(TRS.matrix());
+    glDisable(GL_BLEND);
 
 }
 
@@ -35,6 +50,17 @@ void display(){
 
     // TODO: First draw the scene onto framebuffer, 
     // then use screen quad to add effects!
+    ///--- Render to FB
+    fb.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        drawScene(glfwGetTime());
+    fb.unbind();
+    // fb.display_color_attachment("FB - Color"); ///< debug
+
+    ///--- Render to Window
+    glViewport(0, 0, width, height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    squad.draw();
     drawScene(glfwGetTime());
 }
 
