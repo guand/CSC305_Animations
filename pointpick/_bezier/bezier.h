@@ -30,6 +30,15 @@ private:
     float const _uNum = 100;
 
 private:
+
+    /**
+     * @brief lerp
+     * @param point1
+     * @param point2
+     * @param t
+     * @return vector3f
+     * simple linear interpolation between two points
+     */
     vec3 lerp(vec3 point1, vec3 point2, const float t)
     {
         float x = ((1 - t) * point1[0] + t * point2[0]);
@@ -37,7 +46,16 @@ private:
         return vec3(x, y, 0);
     }
 
-
+    /**
+     * @brief getCasteljauVector
+     * @param pt1
+     * @param pt2
+     * @param pt3
+     * @param pt4
+     * @param t
+     * @return vector3f
+     * get interpolation of all the points recursively for the bezier curve
+     */
     vec3 getCasteljauVector(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4, const float t)
     {
         vec3 aTob, bToc, cTod, abTobc, bcTocd;
@@ -49,6 +67,11 @@ private:
         return lerp(abTobc, bcTocd, t);
     }
 
+    /**
+     * @brief casteljau
+     * @param p
+     * Calculate the bezier curve using the de Casteljau method
+     */
     void casteljau(Hull & p)
     {
         float dt = 1.0 / _uNum;
@@ -61,19 +84,30 @@ private:
         }
     }
 
+    /**
+     * @brief bezier
+     * @param p
+     * Basic bezier calculation for creation a a bezier curve
+     */
     void bezier(Hull & p)
     {
+        // set the dt which is the ratio of the number of vertices
         float dt = 1.0 / _uNum;
+        // t is set to 0
         float t = 0.0;
         for(int i = 0; i <= _uNum; i++)
         {
+            // set the values for both (1 - t) and t
             float omt1 = 1.0 - t;
             float omt2 = pow(omt1, 2);
             float omt3 = pow(omt1, 3);
             float t2 = pow(t, 2);
             float t3 = pow(t, 3);
+            // get the point after the bezier curve calculation
             vec3 point = omt3 * p.p1() + 3.0 * t * omt2 * p.p2() + 3.0 * t2 * omt1 * p.p3() + t3 * p.p4();
+            // add vertex to the vector of vertices
             _vertices.push_back(point);
+            // increment t by the ratio dt for the next vertex
             t += dt;
         }
 
