@@ -30,6 +30,36 @@ private:
     float const _uNum = 100;
 
 private:
+    vec3 lerp(vec3 point1, vec3 point2, const float t)
+    {
+        float x = ((1 - t) * point1[0] + t * point2[0]);
+        float y = ((1- t) * point1[1] + t * point2[1]);
+        return vec3(x, y, 0);
+    }
+
+
+    vec3 getCasteljauVector(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4, const float t)
+    {
+        vec3 aTob, bToc, cTod, abTobc, bcTocd;
+        aTob = lerp(pt1, pt2, t);
+        bToc = lerp(pt2, pt3, t);
+        cTod = lerp(pt3, pt4, t);
+        abTobc = lerp(aTob, bToc, t);
+        bcTocd = lerp(bToc, cTod, t);
+        return lerp(abTobc, bcTocd, t);
+    }
+
+    void casteljau(Hull & p)
+    {
+        float dt = 1.0 / _uNum;
+        float t = 0.0;
+        for(int i = 0; i <= _uNum; i++)
+        {
+            vec3 point = getCasteljauVector(p.p1(), p.p2(), p.p3(), p.p4(), t);
+            _vertices.push_back(point);
+            t += dt;
+        }
+    }
 
     void bezier(Hull & p)
     {
@@ -38,10 +68,10 @@ private:
         for(int i = 0; i <= _uNum; i++)
         {
             float omt1 = 1.0 - t;
-            float omt2 = omt1 * omt1;
-            float omt3 = omt1 * omt2;
-            float t2 = t * t;
-            float t3 = t * t2;
+            float omt2 = pow(omt1, 2);
+            float omt3 = pow(omt1, 3);
+            float t2 = pow(t, 2);
+            float t3 = pow(t, 3);
             vec3 point = omt3 * p.p1() + 3.0 * t * omt2 * p.p2() + 3.0 * t2 * omt1 * p.p3() + t3 * p.p4();
             _vertices.push_back(point);
             t += dt;
@@ -76,8 +106,9 @@ public:
         _hull.p3() = p3;
         _hull.p4() = p4;
 
-        ///--- create the multiline
-        bezier(_hull);
+        ///--- create the bezier using the de Casteljau
+        casteljau(_hull);
+//        bezier(_hull);
     }
 
     void draw(const mat4& model, const mat4& view, const mat4& projection){
