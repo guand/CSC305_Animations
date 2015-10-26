@@ -3,6 +3,7 @@
 #include "_quad/Quad.h"
 #include "_point/point.h"
 #include "_multiline/multiline.h"
+#include "_bezier/bezier.h"
 
 
 int window_width = 1024;
@@ -11,16 +12,20 @@ int window_height = 768;
 mat4 projection;
 mat4 view;
 mat4 model;
+mat4 bmodel;
 
 GLuint _pid_multiline;
 GLuint _pid_point;
 GLuint _pid_point_selection;
+GLuint _pid_bezier;
 
 Quad quad;
 
 MultiLine cam_pos_curve;
+Bezier bez_pos_curve;
 
 std::vector<ControlPoint> cam_pos_points;
+std::vector<ControlPoint> bez_pos_points;
 int selected_point;
 int x_last, y_last;
 void init(){
@@ -34,16 +39,37 @@ void init(){
     _pid_point_selection = opengp::load_shaders("_point/point_selection_vshader.glsl", "_point/point_selection_fshader.glsl");
     if(!_pid_point_selection) exit(EXIT_FAILURE);
 
+    _pid_bezier = opengp::load_shaders("_bezier/bezier_vshader.glsl", "_bezier/bezier_fshader.glsl");
+    if(!_pid_bezier) exit(EXIT_FAILURE);
+
     glClearColor(1,1,1, /*solid*/1.0 );    
     glEnable(GL_DEPTH_TEST);
     quad.init();
 
+    ControlPoint pt1(-0.79, 0.09, 0.0, 0);
+    ControlPoint pt2(-0.88, -0.71, 0.0, 1);
+    ControlPoint pt3(1.3, -0.8, 0.0, 3);
+    ControlPoint pt4(0.71, 0.76, 0.0, 3);
+
+    ///--- init bez_pos_curve
+    bez_pos_curve.init(_pid_bezier);
+    bez_pos_points.push_back(pt1);
+    bez_pos_points.push_back(pt2);
+    bez_pos_points.push_back(pt3);
+    bez_pos_points.push_back(pt4);
+    for (unsigned int i = 0; i < bez_pos_points.size(); i++) {
+        bez_pos_points[i].id() = i;
+        bez_pos_points[i].init(_pid_point, _pid_point_selection);
+    }
+
+    bez_pos_curve.set_points(bez_pos_points[0].position(), bez_pos_points[1].position(), bez_pos_points[2].position(), bez_pos_points[3].position());
+
     ///--- init cam_pos_curve
     cam_pos_curve.init(_pid_multiline);
-    cam_pos_points.push_back(ControlPoint(-0.79, 0.09, 0.2, 0));
-    cam_pos_points.push_back(ControlPoint(-0.88, -0.71, 0.2, 1));
-    cam_pos_points.push_back(ControlPoint(1.3, -0.8, 0.2, 2));
-    cam_pos_points.push_back(ControlPoint(0.71, 0.76, 0.2, 3));
+    cam_pos_points.push_back(pt1);
+    cam_pos_points.push_back(pt2);
+    cam_pos_points.push_back(pt3);
+    cam_pos_points.push_back(pt4);
     for (unsigned int i = 0; i < cam_pos_points.size(); i++) {
         cam_pos_points[i].id() = i;
         cam_pos_points[i].init(_pid_point, _pid_point_selection);
@@ -63,6 +89,10 @@ void init(){
 
     view = Eigen::lookAt(cam_pos, cam_look, cam_up);
     model = mat4::Identity();
+    bmodel << 1, 0, 0, 0,
+              -3, 3, 0, 0,
+              3, -6, 3, 0,
+              -1, 3, -3, 1;
     selected_point = -1;
     x_last = 0;
     y_last = 0;
@@ -84,6 +114,7 @@ void display(){
         cam_pos_points[i].draw(model, view, projection);
     }
     cam_pos_curve.draw(model, view, projection);
+    bez_pos_curve.draw(model, view, projection);
 }
 
 void render_selection() {
@@ -140,6 +171,24 @@ void mousemove(int x, int y)
 
     //TODO: make the curve change while holding down a mouse button and
     //move the mouse!
+    if(selected_point >= 0 && selected_point < cam_pos_points.size())
+    {
+        if(x != x_last || y != y_last)
+        {
+            unproject(x, y, cam_pos_points[selected_point].position());
+            unproject(x, y, bez_pos_points[selected_point].position());
+            cam_pos_curve.set_points(cam_pos_points[0].position(),
+                    cam_pos_points[1].position(),
+                    cam_pos_points[2].position(),
+                    cam_pos_points[3].position());
+            bez_pos_curve.set_points(bez_pos_points[0].position(),
+                    bez_pos_points[1].position(),
+                    bez_pos_points[2].position(),
+                    bez_pos_points[3].position());
+            x_last = x;
+            y_last = y;
+        }
+    }
 
 }
 

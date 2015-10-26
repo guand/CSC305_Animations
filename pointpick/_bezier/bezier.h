@@ -1,12 +1,7 @@
+#pragma once
 #include "icg_common.h"
 
-#define T 100
-#define N 4
-
-const static Scalar H = .7;
-const static Scalar R = 2;
-
-class MultiLine{
+class Bezier{
 private:
     class Hull{
     public:
@@ -28,19 +23,30 @@ private:
     
 private:
     Hull _hull;                  ///< control points
-    std::vector<vec3> _vertices; ///< multiline points
+    std::vector<vec3> _vertices; ///< bezier points
     GLuint _vao;                 ///< Vertex array objects
     GLuint _pid;          ///< GLSL program ID
     GLuint _vbo;
-    
+    float const _uNum = 100;
+
 private:
 
-    void multiline(Hull & p)
+    void bezier(Hull & p)
     {
-        _vertices.push_back(p.p1());
-        _vertices.push_back(p.p2());
-        _vertices.push_back(p.p3());
-        _vertices.push_back(p.p4());
+        float dt = 1.0 / _uNum;
+        float t = 0.0;
+        for(int i = 0; i <= _uNum; i++)
+        {
+            float omt1 = 1.0 - t;
+            float omt2 = omt1 * omt1;
+            float omt3 = omt1 * omt2;
+            float t2 = t * t;
+            float t3 = t * t2;
+            vec3 point = omt3 * p.p1() + 3.0 * t * omt2 * p.p2() + 3.0 * t2 * omt1 * p.p3() + t3 * p.p4();
+            _vertices.push_back(point);
+            t += dt;
+        }
+
     }
 
 public:
@@ -60,6 +66,7 @@ public:
         glBindVertexArray(0);
         glUseProgram(0);
     }
+
     void set_points(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4) {
         _vertices.clear();
 
@@ -70,46 +77,12 @@ public:
         _hull.p4() = p4;
 
         ///--- create the multiline
-        multiline(_hull);
-    }
-
-    GLfloat bernstein(GLfloat u, int i, int n)
-    {
-        GLfloat choose[N] = {1, 3, 3, 1};
-        GLfloat nChoosei = choose[i];
-        GLfloat ui = pow(u, i);
-        GLfloat oneMinusu = pow(1.0-u, n-i);
-        return (nChoosei*ui*oneMinusu);
-    }
-
-    void bezier()
-    {
-        glLineWidth(4.0);
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_LINE_STRIP);
-
-        for(int uInt = 0; uInt <= T; uInt++)
-        {
-            GLfloat u = uInt/(GLfloat)T;
-
-            GLfloat x = 0.0;
-            GLfloat y = 0.0;
-
-            for(int i = 0; i < N; i++)
-            {
-                GLfloat b = bernstein(u, i, N-1);
-                x += b * _vertices[i][0];
-                y += b * _vertices[i][1];
-            }
-            glVertex2f(x, y);
-        }
-        glEnd();
-        glFlush();
-
+        bezier(_hull);
     }
 
     void draw(const mat4& model, const mat4& view, const mat4& projection){
         if (_vertices.empty()) return;
+
 
         glUseProgram(_pid);
         glBindVertexArray(_vao);
@@ -130,14 +103,10 @@ public:
         GLuint model_view_id = glGetUniformLocation(_pid, "model_view");
         glUniformMatrix4fv(model_view_id, ONE, DONT_TRANSPOSE, MV.data());
         check_error_gl();
-
         glDrawArrays(GL_LINE_STRIP, 0, _vertices.size());
         glDisableVertexAttribArray(position);
         glBindVertexArray(0);
         glUseProgram(0);
         check_error_gl();
-        ///--- setup view matrices for bezier curve
-//        bezier();
-//        display2dControlPolyline();
     }
 };
