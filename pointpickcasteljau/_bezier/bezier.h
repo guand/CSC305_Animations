@@ -6,19 +6,23 @@ private:
     class Hull{
     public:
         Hull() {
-            _p1 = _p2 = _p3 = _p4 = vec3::Zero();
+            _p1 = _p2 = _p3 = _p4 = _p5 = _p6 = vec3::Zero();
         }
 
         vec3& p1(){ return _p1; }
         vec3& p2(){ return _p2; }
         vec3& p3(){ return _p3; }
         vec3& p4(){ return _p4; }
+        vec3& p5(){ return _p5; }
+        vec3& p6(){ return _p6; }
 
     private:
         vec3 _p1;
         vec3 _p2;
         vec3 _p3;
         vec3 _p4;
+        vec3 _p5;
+        vec3 _p6;
     };
     
 private:
@@ -56,15 +60,25 @@ private:
      * @return vector3f
      * get interpolation of all the points recursively for the bezier curve
      */
-    vec3 getCasteljauVector(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4, const float t)
+    vec3 getCasteljauVector(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4, vec3 pt5, vec3 pt6, const float t)
     {
-        vec3 aTob, bToc, cTod, abTobc, bcTocd;
+        vec3 aTob, bToc, cTod, dToe, eTof, abTobc, bcTocd, cdTode, deToef, abbcTobccd, bccdTocdde, cddeTodeef,
+        abbcbccdTobccdcdde, bccdcddeTocddedeef;
         aTob = lerp(pt1, pt2, t);
         bToc = lerp(pt2, pt3, t);
         cTod = lerp(pt3, pt4, t);
+        dToe = lerp(pt4, pt5, t);
+        eTof = lerp(pt5, pt6, t);
         abTobc = lerp(aTob, bToc, t);
         bcTocd = lerp(bToc, cTod, t);
-        return lerp(abTobc, bcTocd, t);
+        cdTode = lerp(cTod, dToe, t);
+        deToef = lerp(dToe, eTof, t);
+        abbcTobccd = lerp(abTobc, bcTocd, t);
+        bccdTocdde = lerp(bcTocd, cdTode, t);
+        cddeTodeef = lerp(cdTode, deToef, t);
+        abbcbccdTobccdcdde = lerp(abbcTobccd, bccdTocdde, t);
+        bccdcddeTocddedeef = lerp(bccdTocdde, cddeTodeef, t);
+        return lerp(abbcbccdTobccdcdde, bccdcddeTocddedeef, t);
     }
 
     /**
@@ -78,39 +92,10 @@ private:
         float t = 0.0;
         for(int i = 0; i <= _uNum; i++)
         {
-            vec3 point = getCasteljauVector(p.p1(), p.p2(), p.p3(), p.p4(), t);
+            vec3 point = getCasteljauVector(p.p1(), p.p2(), p.p3(), p.p4(), p.p5(), p.p6(), t);
             _vertices.push_back(point);
             t += dt;
         }
-    }
-
-    /**
-     * @brief bezier
-     * @param p
-     * Basic bezier cubic calculation for creation a a bezier curve
-     */
-    void bezier(Hull & p)
-    {
-        // set the dt which is the ratio of the number of vertices
-        float dt = 1.0 / _uNum;
-        // t is set to 0
-        float t = 0.0;
-        for(int i = 0; i <= _uNum; i++)
-        {
-            // set the values for both (1 - t) and t
-            float omt1 = 1.0 - t;
-            float omt2 = pow(omt1, 2);
-            float omt3 = pow(omt1, 3);
-            float t2 = pow(t, 2);
-            float t3 = pow(t, 3);
-            // get the point after the bezier curve calculation
-            vec3 point = omt3 * p.p1() + 3.0 * t * omt2 * p.p2() + 3.0 * t2 * omt1 * p.p3() + t3 * p.p4();
-            // add vertex to the vector of vertices
-            _vertices.push_back(point);
-            // increment t by the ratio dt for the next vertex
-            t += dt;
-        }
-
     }
 
 public:
@@ -131,7 +116,7 @@ public:
         glUseProgram(0);
     }
 
-    void set_points(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4) {
+    void set_points(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4, const vec3& p5, const vec3& p6) {
         _vertices.clear();
 
         ///--- initialize data
@@ -139,6 +124,8 @@ public:
         _hull.p2() = p2;
         _hull.p3() = p3;
         _hull.p4() = p4;
+        _hull.p5() = p5;
+        _hull.p6() = p6;
 
         ///--- create the bezier using the de Casteljau
         casteljau(_hull);

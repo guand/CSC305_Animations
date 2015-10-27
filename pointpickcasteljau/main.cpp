@@ -48,8 +48,10 @@ void init(){
 
     ControlPoint pt1(-0.79, 0.09, 0.0, 0);
     ControlPoint pt2(-0.88, -0.71, 0.0, 1);
-    ControlPoint pt3(1.3, -0.8, 0.0, 3);
+    ControlPoint pt3(1.3, -0.8, 0.0, 2);
     ControlPoint pt4(0.71, 0.76, 0.0, 3);
+    ControlPoint pt5(0.88, 0.66, 0.0, 4);
+    ControlPoint pt6(0.66, 0.86, 0.0, 5);
 
     ///--- init bez_pos_curve
     bez_pos_curve.init(_pid_bezier);
@@ -57,12 +59,14 @@ void init(){
     bez_pos_points.push_back(pt2);
     bez_pos_points.push_back(pt3);
     bez_pos_points.push_back(pt4);
+    bez_pos_points.push_back(pt5);
+    bez_pos_points.push_back(pt6);
     for (unsigned int i = 0; i < bez_pos_points.size(); i++) {
         bez_pos_points[i].id() = i;
         bez_pos_points[i].init(_pid_point, _pid_point_selection);
     }
 
-    bez_pos_curve.set_points(bez_pos_points[0].position(), bez_pos_points[1].position(), bez_pos_points[2].position(), bez_pos_points[3].position());
+    bez_pos_curve.set_points(bez_pos_points[0].position(), bez_pos_points[1].position(), bez_pos_points[2].position(), bez_pos_points[3].position(), bez_pos_points[4].position(), bez_pos_points[5].position());
 
     ///--- init cam_pos_curve
     cam_pos_curve.init(_pid_multiline);
@@ -70,12 +74,14 @@ void init(){
     cam_pos_points.push_back(pt2);
     cam_pos_points.push_back(pt3);
     cam_pos_points.push_back(pt4);
+    cam_pos_points.push_back(pt5);
+    cam_pos_points.push_back(pt6);
     for (unsigned int i = 0; i < cam_pos_points.size(); i++) {
         cam_pos_points[i].id() = i;
         cam_pos_points[i].init(_pid_point, _pid_point_selection);
     }
 
-    cam_pos_curve.set_points(cam_pos_points[0].position(), cam_pos_points[1].position(), cam_pos_points[2].position(), cam_pos_points[3].position());
+    cam_pos_curve.set_points(cam_pos_points[0].position(), cam_pos_points[1].position(), cam_pos_points[2].position(), cam_pos_points[3].position(), cam_pos_points[4].position(), cam_pos_points[5].position());
 
     ///--- Setup view-projection matrix
     GLfloat top = 1.0f;
@@ -155,7 +161,9 @@ void selection_button(int button, int action) {
         cam_pos_curve.set_points(cam_pos_points[0].position(),
                 cam_pos_points[1].position(),
                 cam_pos_points[2].position(),
-                cam_pos_points[3].position());
+                cam_pos_points[3].position(),
+                cam_pos_points[4].position(),
+                cam_pos_points[5].position());
             }
         }
         selected_point = -1;
@@ -176,11 +184,15 @@ void mousemove(int x, int y)
             cam_pos_curve.set_points(cam_pos_points[0].position(),
                     cam_pos_points[1].position(),
                     cam_pos_points[2].position(),
-                    cam_pos_points[3].position());
+                    cam_pos_points[3].position(),
+                    cam_pos_points[4].position(),
+                    cam_pos_points[5].position());
             bez_pos_curve.set_points(bez_pos_points[0].position(),
                     bez_pos_points[1].position(),
                     bez_pos_points[2].position(),
-                    bez_pos_points[3].position());
+                    bez_pos_points[3].position(),
+                    bez_pos_points[4].position(),
+                    bez_pos_points[5].position());
             x_last = x;
             y_last = y;
         }

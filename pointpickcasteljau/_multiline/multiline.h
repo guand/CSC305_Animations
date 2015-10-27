@@ -1,8 +1,5 @@
 #include "icg_common.h"
 
-#define T 100
-#define N 4
-
 const static Scalar H = .7;
 const static Scalar R = 2;
 
@@ -11,19 +8,23 @@ private:
     class Hull{
     public:
         Hull() {
-            _p1 = _p2 = _p3 = _p4 = vec3::Zero();
+            _p1 = _p2 = _p3 = _p4 = _p5 = _p6 = vec3::Zero();
         }
 
         vec3& p1(){ return _p1; }
         vec3& p2(){ return _p2; }
         vec3& p3(){ return _p3; }
         vec3& p4(){ return _p4; }
+        vec3& p5(){ return _p5; }
+        vec3& p6(){ return _p6; }
 
     private:
         vec3 _p1;
         vec3 _p2;
         vec3 _p3;
         vec3 _p4;
+        vec3 _p5;
+        vec3 _p6;
     };
     
 private:
@@ -41,6 +42,8 @@ private:
         _vertices.push_back(p.p2());
         _vertices.push_back(p.p3());
         _vertices.push_back(p.p4());
+        _vertices.push_back(p.p5());
+        _vertices.push_back(p.p6());
     }
 
 public:
@@ -60,7 +63,7 @@ public:
         glBindVertexArray(0);
         glUseProgram(0);
     }
-    void set_points(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4) {
+    void set_points(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4, const vec3& p5, const vec3& p6) {
         _vertices.clear();
 
         ///--- initialize data
@@ -68,6 +71,8 @@ public:
         _hull.p2() = p2;
         _hull.p3() = p3;
         _hull.p4() = p4;
+        _hull.p5() = p5;
+        _hull.p6() = p6;
 
         ///--- create the multiline
         multiline(_hull);
@@ -102,7 +107,5 @@ public:
         glUseProgram(0);
         check_error_gl();
         ///--- setup view matrices for bezier curve
-//        bezier();
-//        display2dControlPolyline();
     }
 };
