@@ -32,6 +32,7 @@ private:
     GLuint _vao;                 ///< Vertex array objects
     GLuint _pid;          ///< GLSL program ID
     GLuint _vbo;
+    GLuint _tex;
     float const _uNum = 100;
 
 private:
@@ -141,17 +142,63 @@ private:
     }
 
 public:
-    void init(GLuint pid){
-        ///--- Set the (compiled) shaders
-        _pid = pid;
-        
-        /// Generate the vertex array
-        glGenVertexArrays(ONE, &_vao);
+    void init(string filename = ""){
+        ///--- Compile the shaders
+        _pid = opengp::load_shaders("_bezier/bezier_vshader.glsl", "_bezier/bezier_fshader.glsl");
+        if(!_pid) exit(EXIT_FAILURE);
+        glUseProgram(_pid);
+
+        ///--- Vertex one vertex Array
+        glGenVertexArrays(1, &_vao);
         glBindVertexArray(_vao);
-        
-        /// Generate one buffer, put the resulting identifier in vertexbuffer
-        glGenBuffers(ONE, &_vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+
+        ///--- Vertex coordinates
+        {
+            const GLfloat vpoint[] = { /*V1*/ -1.0f, -1.0f, 0.0f,
+                                       /*V2*/ +1.0f, -1.0f, 0.0f,
+                                       /*V3*/ -1.0f, +1.0f, 0.0f,
+                                       /*V4*/ +1.0f, +1.0f, 0.0f };
+            ///--- Buffer
+            glGenBuffers(1, &_vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vpoint), vpoint, GL_STATIC_DRAW);
+
+            ///--- Attribute
+            GLuint vpoint_id = glGetAttribLocation(_pid, "vpoint");
+            glEnableVertexAttribArray(vpoint_id);
+            glVertexAttribPointer(vpoint_id, 3, GL_FLOAT, DONT_NORMALIZE, ZERO_STRIDE, ZERO_BUFFER_OFFSET);
+        }
+
+        ///--- Texture coordinates
+        {
+            const GLfloat vtexcoord[] = { /*V1*/ 0.0f, 0.0f,
+                                          /*V2*/ 1.0f, 0.0f,
+                                          /*V3*/ 0.0f, 1.0f,
+                                          /*V4*/ 1.0f, 1.0f};
+
+            ///--- Buffer
+            glGenBuffers(1, &_vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(vtexcoord), vtexcoord, GL_STATIC_DRAW);
+
+            ///--- Attribute
+            GLuint vtexcoord_id = glGetAttribLocation(_pid, "vtexcoord");
+            glEnableVertexAttribArray(vtexcoord_id);
+            glVertexAttribPointer(vtexcoord_id, 2, GL_FLOAT, DONT_NORMALIZE, ZERO_STRIDE, ZERO_BUFFER_OFFSET);
+        }
+
+        ///--- Load texture
+        if(!filename.empty()){
+            glGenTextures(1, &_tex);
+            glBindTexture(GL_TEXTURE_2D, _tex);
+            glfwLoadTexture2D(filename.c_str(), 0);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        }
+
+        ///--- Texture uniforms
+        GLuint tex_id = glGetUniformLocation(_pid, "tex");
+        glUniform1i(tex_id, 0 /*GL_TEXTURE0*/);
 
         ///--- to avoid the current object being polluted
         glBindVertexArray(0);
@@ -172,39 +219,24 @@ public:
 
         ///--- create the bezier using the de Casteljau
         casteljau(_hull);
-//        triangulation(_hull);
+        triangulation(_hull);
 //        bezier(_hull);
     }
 
-    void draw(const mat4& model, const mat4& view, const mat4& projection){
-        if (_vertices.empty()) return;
-
-//        if (_triangulation.empty()) return;
-
-
+    void draw(const mat4& MVP){
         glUseProgram(_pid);
         glBindVertexArray(_vao);
-        check_error_gl();
+            ///--- Bind textures
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, _tex);
 
-        ///--- Vertex Attribute ID for Vertex Positions
-        GLuint position = glGetAttribLocation(_pid, "position");
-        glEnableVertexAttribArray(position);
-        glVertexAttribPointer(position, 3, GL_FLOAT, DONT_NORMALIZE, ZERO_STRIDE, ZERO_BUFFER_OFFSET);
+            ///--- Setup MVP
+            GLuint MVP_id = glGetUniformLocation(_pid, "MVP");
+            glUniformMatrix4fv(MVP_id, 1, GL_FALSE, MVP.data());
 
-        ///--- vertices
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Vec3)*_vertices.size(), &_vertices[0], GL_STATIC_DRAW);
-
-        ///--- setup view matrices
-        GLuint projection_id = glGetUniformLocation(_pid, "projection");
-        glUniformMatrix4fv(projection_id, ONE, DONT_TRANSPOSE, projection.data());
-        mat4 MV = view*model;
-        GLuint model_view_id = glGetUniformLocation(_pid, "model_view");
-        glUniformMatrix4fv(model_view_id, ONE, DONT_TRANSPOSE, MV.data());
-        check_error_gl();
-        glDrawArrays(GL_LINE_STRIP, 0, _vertices.size());
-        glDisableVertexAttribArray(position);
+            ///--- Draw
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glBindVertexArray(0);
         glUseProgram(0);
-        check_error_gl();
     }
 };

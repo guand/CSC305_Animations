@@ -195,6 +195,18 @@ void mousemove(int x, int y)
                     bez_pos_points[5].position());
             x_last = x;
             y_last = y;
+            std::cout << "Point 1" << std::endl;
+            std::cout << cam_pos_points[0].position() << std::endl;
+            std::cout << "Point 2" << std::endl;
+            std::cout << cam_pos_points[1].position() << std::endl;
+            std::cout << "Point 3" << std::endl;
+            std::cout << cam_pos_points[2].position() << std::endl;
+            std::cout << "Point 4" << std::endl;
+            std::cout << cam_pos_points[3].position() << std::endl;
+            std::cout << "Point 5" << std::endl;
+            std::cout << cam_pos_points[4].position() << std::endl;
+            std::cout << "Point 6" << std::endl;
+            std::cout << cam_pos_points[5].position() << std::endl;
         }
     }
 

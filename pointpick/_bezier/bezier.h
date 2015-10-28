@@ -112,36 +112,17 @@ private:
             t += dt;
         }
 
-        _vertices.push_back(p.p1());
-
     }
 
-    bool intersection(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4)
-    {
-        // Store the values for fast access and easy
-        // equations-to-code conversion
-        float x1 = pt1[0], x2 = pt2[0], x3 = pt3[0], x4 = pt4[0];
-        float y1 = pt1[1], y2 = pt2[1], y3 = pt3[1], y4 = pt4[1];
-
-        float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-        // If d is zero, there is no intersection
-//        if (d == 0) return false;
-
-        // Get the x and y
-        float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
-        float x = ( pre * (x3 - x4) - (x1 - x2) * post ) / d;
-        float y = ( pre * (y3 - y4) - (y1 - y2) * post ) / d;
-
-        // Check if the x and y coordinates are within both lines
-//        if ( x < min(x1, x2) || x > max(x1, x2) ||
-//        x < min(x3, x4) || x > max(x3, x4) ) return false;
-//        if ( y < min(y1, y2) || y > max(y1, y2) ||
-//        y < min(y3, y4) || y > max(y3, y4) ) return false;
-
-        // Return the point of intersection
-        return true;
-    }
-
+    /**
+     * @brief triangulationPt
+     * @param pt1
+     * @param pt2
+     * @param pt3
+     * @param pt4
+     * @return Vector3f
+     * Gets the interesection point
+     */
     vec3 triangulationPt(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4)
     {
         float x1 = pt1[0], x2 = pt2[0], x3 = pt3[0], x4 = pt4[0];
@@ -155,6 +136,11 @@ private:
         return vec3(x, y, 0);
     }
 
+    /**
+     * @brief triangulation
+     * @param p
+     * performs triangulation on the curve
+     */
     void triangulation(Hull & p)
     {
         for(int i = 0; i < _vertices.size(); i++){
@@ -228,7 +214,7 @@ public:
         GLuint model_view_id = glGetUniformLocation(_pid, "model_view");
         glUniformMatrix4fv(model_view_id, ONE, DONT_TRANSPOSE, MV.data());
         check_error_gl();
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, _triangulation.size());
+        glDrawArrays(GL_LINE_STRIP, 0, _triangulation.size());
         glDisableVertexAttribArray(position);
         glBindVertexArray(0);
         glUseProgram(0);

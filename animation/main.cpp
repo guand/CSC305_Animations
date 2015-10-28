@@ -2,6 +2,8 @@
 #include "FrameBuffer.h"
 #include "_quad/Quad.h"
 #include "_screenquad/ScreenQuad.h"
+#include "_bezier/bezier.h"
+#include "_point/point.h"
 #include "Bat.h"
 
 int width=720, height=720;
@@ -10,12 +12,19 @@ const int SPEED_FACTOR = 20;
 const int BEZIER_SPEED = 1;
 typedef Eigen::Transform<float,3,Eigen::Affine> Transform;
 std::vector<vec3> bezierPts;
+std::vector<Quad> snowflare;
 
-Quad background;
+
+//Quad background;
+Bezier bez_pos_curve;
 Quad moon;
 Quad yellow;
 Bat bat;
-
+std::vector<ControlPoint> bez_pos_points;
+// >.> snow particle values
+float snowP[20] = {20, 15, 17, 10, 5, 3, 9, 0, -2, -6, -9, -20, -13, -14, -5, 11, 19, 16, 15, 18};
+float snowW[20] = {100, 130, 27, 50, 65, 113, 79, 90, 118, 46, 79, 120, 63, 64, 115, 38, 129, 126, 145, 128};
+float snowT[20] = {4, 6, 4, 3, 7, 2, 7, 2, 4, 5, 5, 0, 8, 4, 2, 0, 4, 4, 2, 3};
 
 static const float SpeedFactor = 1;
 // TODO: declare Framebuffer + ScreenQuad (see slides)
@@ -46,17 +55,24 @@ vec3 bezierMovement(std::vector<vec3> movement, float time)
 
 void init(){
     glClearColor(1,1,1, /*solid*/1.0 );
-    background.init("_quad/background.tga");
+//    bez_pos_curve.init();
     moon.init("_quad/moon.tga");
-    yellow.init("_quad/yellow.tga");
+    yellow.init("_quad/orange.tga");
     bat.init();
+    for(int i = 0; i < 20; i++)
+    {
+        snowflare.push_back(yellow);
+    }
 
     // TODO: initialize framebuffer (see slides)
     // TODO: initialize fullscreen quad (see slides)
     GLuint fb_tex = fb.init();
     squad.init(fb_tex);
+}
 
-
+float RandomNumber(float Min, float Max)
+{
+    return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
 }
 
 void drawScene(float timeCount)
@@ -92,8 +108,19 @@ void drawMoon(float timeCount)
     Transform TRS = Transform::Identity();
     TRS *= Eigen::Translation3f(-0.75, 0.75, 0.0);
     TRS *= Eigen::AlignedScaling3f(0.40, 0.40, 1.0);
-
     moon.draw(TRS.matrix());
+    float randomNum = RandomNumber(-1, 1);
+    for(int i = 0; i < snowflare.size(); i++)
+    {
+        Transform SNOW = Transform::Identity();
+        SNOW *= Eigen::AlignedScaling3f(0.05, 0.05, 1.0);
+        SNOW *= Eigen::AlignedScaling3f(0.8, 0.8, 1.0);
+        SNOW *= Eigen::Translation3f(snowP[i], snowW[i], 0.0);
+        SNOW *= Eigen::Translation3f(0.0, 0.0-timeCount*2-snowT[i], 0.0);
+//        SNOW *= Eigen::Translation3f(randomNum, 0, 0.0);
+        snowflare.at(i).draw(SNOW.matrix());
+    }
+
     glDisable(GL_BLEND);
 }
 
