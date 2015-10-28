@@ -48,7 +48,7 @@ public:
         wingL_M *= Eigen::Translation3f(-0.15, -0.1, 0.0);
 //        wingL_M *= Eigen::Affine3f(Eigen::AngleAxisf(M_PI/-2.0, vec3::UnitZ())).matrix();
         wingL_M *= Eigen::Affine3f(Eigen::AngleAxisf(wingFlap, vec3::UnitZ())).matrix();
-        wingL_M *= Eigen::Translation3f(-0.45, 0.0, 0.0);;
+        wingL_M *= Eigen::Translation3f(-0.45, 0.0, 0.0);
         wingL.draw(wingL_M.matrix());
         Transform wingR_M = Transform::Identity();
         wingR_M *= Eigen::AlignedScaling3f(-1.0, 1.0, 1.0);

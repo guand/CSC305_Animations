@@ -72,12 +72,10 @@ public:
     void draw(){
         glUseProgram(_pid);
         glBindVertexArray(_vao);      
-            glUniform1f(glGetUniformLocation(_pid, "tex_width"), _width);
-            glUniform1f(glGetUniformLocation(_pid, "tex_height"), _height);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, _tex);
-//            GLuint MVP_id = glGetUniformLocation(_pid, "MVP");
-//            glUniformMatrix4fv(MVP_id, 1, GL_FALSE, MVP.data());
+            GLuint MVP_id = glGetUniformLocation(_pid, "MVP");
+            glUniformMatrix4fv(MVP_id, 1, GL_FALSE, MVP.data());
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);        
         glBindVertexArray(0);        
         glUseProgram(0);

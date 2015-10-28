@@ -21,22 +21,22 @@ void main() {
     // float std = .1; ///< standard deviation (<.3 disable)
     vec3 color_tot = vec3(0,0,0);
     float weight_tot = 0;
-    color = texture(tex, vec2(gl_FragCoord)/1024.0) * weight[0];
+    color = texture(tex, vec2(gl_FragCoord)/tex_width).rgb * weight[0];
     for(int i = 1; i < 5; i++) {
-        color += texture(tex, (vec2(gl_FragCoord)+vec2(0.0, offset[i])/1024.0)) * weight[i];
-        color += texture(tex, (vec2(gl_FragCoord)-vec2(0.0, offset[i])/1024.0)) * weight[i];
+        color += texture(tex, (vec2(gl_FragCoord)+vec2(0.0, offset[i])/tex_width)).rgb * weight[i];
+        color += texture(tex, (vec2(gl_FragCoord)-vec2(0.0, offset[i])/tex_height)).rgb * weight[i];
     }
 
-    int SIZE = 1 + 2 * 3 * int( ceil(std) );
-    for(int i=-SIZE; i<=SIZE; i++){
-        for(int j=-SIZE; j<=SIZE; j++){
-            float w = exp(-(i*i+j*j)/(2.0*std*std*std*std));
-            vec3 neigh_color = texture(tex, uv+vec2(i/tex_width,j/tex_height)).rgb;
-            color_tot += w * neigh_color;
-            weight_tot += w;
-        }
-    }
-    color = color_tot / weight_tot; ///< ensure \int w = 1
+//    int SIZE = 1 + 2 * 3 * int( ceil(std) );
+//    for(int i=-SIZE; i<=SIZE; i++){
+//        for(int j=-SIZE; j<=SIZE; j++){
+//            float w = exp(-(i*i+j*j)/(2.0*std*std*std*std));
+//            vec3 neigh_color = texture(tex, uv+vec2(i/tex_width,j/tex_height)).rgb;
+//            color_tot += w * neigh_color;
+//            weight_tot += w;
+//        }
+//    }
+//    color = color_tot / weight_tot; ///< ensure \int w = 1
 #endif
 
 #ifdef SOBEL
@@ -57,6 +57,6 @@ void main() {
     color = vec3(G, G, G);
 #endif
 // No processing: using this line
-color = texture(tex,uv).rgb;
+//color = texture(tex,uv).rgb;
 }
 

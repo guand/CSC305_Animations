@@ -46,9 +46,9 @@ void init(){
     glEnable(GL_DEPTH_TEST);
     quad.init();
 
-    ControlPoint pt1(-0.79, 0.09, 0.0, 0);
+    ControlPoint pt1(-0.79, 0.76, 0.0, 0);
     ControlPoint pt2(-0.88, -0.71, 0.0, 1);
-    ControlPoint pt3(1.3, -0.8, 0.0, 3);
+    ControlPoint pt3(0.8, -0.71, 0.0, 2);
     ControlPoint pt4(0.71, 0.76, 0.0, 3);
 
     ///--- init bez_pos_curve

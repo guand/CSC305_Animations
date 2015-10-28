@@ -13,6 +13,7 @@ std::vector<vec3> bezierPts;
 
 Quad background;
 Quad moon;
+Quad yellow;
 Bat bat;
 
 
@@ -47,6 +48,7 @@ void init(){
     glClearColor(1,1,1, /*solid*/1.0 );
     background.init("_quad/background.tga");
     moon.init("_quad/moon.tga");
+    yellow.init("_quad/yellow.tga");
     bat.init();
 
     // TODO: initialize framebuffer (see slides)
@@ -83,13 +85,13 @@ void drawScene(float timeCount)
     glDisable(GL_BLEND);
 }
 
-void drawMoon()
+void drawMoon(float timeCount)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Transform TRS = Transform::Identity();
     TRS *= Eigen::Translation3f(-0.75, 0.75, 0.0);
-    TRS *= Eigen::AlignedScaling3f(0.35, 0.35, 1.0);
+    TRS *= Eigen::AlignedScaling3f(0.40, 0.40, 1.0);
 
     moon.draw(TRS.matrix());
     glDisable(GL_BLEND);
@@ -115,7 +117,7 @@ void display(){
     ///--- Render to FB
     fb.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        drawMoon();
+        drawMoon(glfwGetTime());
     fb.unbind();
     // fb.display_color_attachment("FB - Color"); ///< debug
 

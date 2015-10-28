@@ -15,7 +15,7 @@ ScreenQuad squad;
 
 void init(){
     glClearColor(1,1,1, /*solid*/1.0 );
-    foreground.init("_quad/bat.tga");
+    foreground.init("_quad/nyancat.tga");
     background.init("_quad/background.tga");
 
     // TODO: initialize framebuffer (see slides)

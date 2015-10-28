@@ -24,6 +24,7 @@ private:
 private:
     Hull _hull;                  ///< control points
     std::vector<vec3> _vertices; ///< bezier points
+    std::vector<vec3> _triangulation;
     GLuint _vao;                 ///< Vertex array objects
     GLuint _pid;          ///< GLSL program ID
     GLuint _vbo;
@@ -111,6 +112,61 @@ private:
             t += dt;
         }
 
+        _vertices.push_back(p.p1());
+
+    }
+
+    bool intersection(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4)
+    {
+        // Store the values for fast access and easy
+        // equations-to-code conversion
+        float x1 = pt1[0], x2 = pt2[0], x3 = pt3[0], x4 = pt4[0];
+        float y1 = pt1[1], y2 = pt2[1], y3 = pt3[1], y4 = pt4[1];
+
+        float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        // If d is zero, there is no intersection
+//        if (d == 0) return false;
+
+        // Get the x and y
+        float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
+        float x = ( pre * (x3 - x4) - (x1 - x2) * post ) / d;
+        float y = ( pre * (y3 - y4) - (y1 - y2) * post ) / d;
+
+        // Check if the x and y coordinates are within both lines
+//        if ( x < min(x1, x2) || x > max(x1, x2) ||
+//        x < min(x3, x4) || x > max(x3, x4) ) return false;
+//        if ( y < min(y1, y2) || y > max(y1, y2) ||
+//        y < min(y3, y4) || y > max(y3, y4) ) return false;
+
+        // Return the point of intersection
+        return true;
+    }
+
+    vec3 triangulationPt(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4)
+    {
+        float x1 = pt1[0], x2 = pt2[0], x3 = pt3[0], x4 = pt4[0];
+        float y1 = pt1[1], y2 = pt2[1], y3 = pt3[1], y4 = pt4[1];
+
+        float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        float pre = (x1*y2 - y1*x2), post = (x3*y4 - y3*x4);
+        float x = ( pre * (x3 - x4) - (x1 - x2) * post ) / d;
+        float y = ( pre * (y3 - y4) - (y1 - y2) * post ) / d;
+
+        return vec3(x, y, 0);
+    }
+
+    void triangulation(Hull & p)
+    {
+        for(int i = 0; i < _vertices.size(); i++){
+            _triangulation.push_back(_vertices.at(i));
+            vec3 pt1 = _vertices.at(i);
+            vec3 pt2 = vec3(pt1[0], 1, 0);
+            vec3 pt3 = p.p1();
+            vec3 pt4 = p.p4();
+
+            vec3 intersect = triangulationPt(pt1, pt2, pt3, pt4);
+            _triangulation.push_back(intersect);
+        }
     }
 
 public:
@@ -133,6 +189,7 @@ public:
 
     void set_points(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4) {
         _vertices.clear();
+        _triangulation.clear();
 
         ///--- initialize data
         _hull.p1() = p1;
@@ -141,12 +198,15 @@ public:
         _hull.p4() = p4;
 
         ///--- create the bezier using the de Casteljau
-        casteljau(_hull);
-//        bezier(_hull);
+//        casteljau(_hull);
+        bezier(_hull);
+        triangulation(_hull);
     }
 
     void draw(const mat4& model, const mat4& view, const mat4& projection){
         if (_vertices.empty()) return;
+
+        if (_triangulation.empty()) return;
 
 
         glUseProgram(_pid);
@@ -159,7 +219,7 @@ public:
         glVertexAttribPointer(position, 3, GL_FLOAT, DONT_NORMALIZE, ZERO_STRIDE, ZERO_BUFFER_OFFSET);
 
         ///--- vertices
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Vec3)*_vertices.size(), &_vertices[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vec3)*_triangulation.size(), &_triangulation[0], GL_STATIC_DRAW);
 
         ///--- setup view matrices
         GLuint projection_id = glGetUniformLocation(_pid, "projection");
@@ -168,7 +228,7 @@ public:
         GLuint model_view_id = glGetUniformLocation(_pid, "model_view");
         glUniformMatrix4fv(model_view_id, ONE, DONT_TRANSPOSE, MV.data());
         check_error_gl();
-        glDrawArrays(GL_LINE_STRIP, 0, _vertices.size());
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, _triangulation.size());
         glDisableVertexAttribArray(position);
         glBindVertexArray(0);
         glUseProgram(0);

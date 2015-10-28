@@ -5,6 +5,10 @@ uniform sampler2D tex;
 
 void main() {
     color = texture(tex,uv).rgba;
+//    for (int i = 1; i < 5; ++i)
+//    {
+//        vec2 offset =
+//    }
 }
 
 
