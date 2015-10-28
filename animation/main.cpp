@@ -1,22 +1,33 @@
 #include "icg_common.h"
+#include "FrameBuffer.h"
+#include "_quad/Quad.h"
+#include "_screenquad/ScreenQuad.h"
 #include "Bat.h"
 
-typedef Eigen::Transform<float,3,Eigen::Affine> Transform;
-
-Bat bat;
-
+int width=720, height=720;
 const int BAT_MOVEMENT = 10;
-const int SPEED_FACTOR = 1;
-const int BEZIER_SPEED = 5;
-
+const int SPEED_FACTOR = 20;
+const int BEZIER_SPEED = 1;
+typedef Eigen::Transform<float,3,Eigen::Affine> Transform;
 std::vector<vec3> bezierPts;
 
-void init(){
-    ///--- Sets background color
-    glClearColor(/*gray*/ .937,.937,.937, /*solid*/1.0 );
-    bat.init();
-}
+Quad background;
+Quad moon;
+Bat bat;
 
+
+static const float SpeedFactor = 1;
+// TODO: declare Framebuffer + ScreenQuad (see slides)
+FrameBuffer fb(width, height);
+ScreenQuad squad;
+
+/**
+ * @brief bezierMovement
+ * @param movement
+ * @param time
+ * @return vector3f
+ * Creates the curve for the movement
+ */
 vec3 bezierMovement(std::vector<vec3> movement, float time)
 {
     float t = time / BEZIER_SPEED;
@@ -31,16 +42,32 @@ vec3 bezierMovement(std::vector<vec3> movement, float time)
     return point;
 }
 
-void display(){
-    glClear(GL_COLOR_BUFFER_BIT);
 
-    float time_s = glfwGetTime();
-    float freq = M_PI*time_s*SPEED_FACTOR;
-    // Bat size and movement
-    float wingFlap = std::sin(time_s);
-    float scale = 0.10;
+void init(){
+    glClearColor(1,1,1, /*solid*/1.0 );
+    background.init("_quad/background.tga");
+    moon.init("_quad/moon.tga");
+    bat.init();
 
-    // bezier control points
+    // TODO: initialize framebuffer (see slides)
+    // TODO: initialize fullscreen quad (see slides)
+    GLuint fb_tex = fb.init();
+    squad.init(fb_tex);
+
+
+}
+
+void drawScene(float timeCount)
+{
+    //TODO: Draw the animation you want
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    float t = timeCount * SpeedFactor;
+    float bTime = fmod(t, 3);
+    float wingFlap = std::sin(t * SPEED_FACTOR);
+    float scale = 0.15;
+//    Transform TRS = Transform::Identity();
+//    background.draw(TRS.matrix());
     vec3 pt1(-0.583333, 0.992188, 0);
     vec3 pt2(-0.88, -0.71, 0);
     vec3 pt3(1.3, -0.8, 0);
@@ -49,23 +76,103 @@ void display(){
     bezierPts.push_back(pt2);
     bezierPts.push_back(pt3);
     bezierPts.push_back(pt4);
-
-    // bezier movement
-    vec3 bezier_movement = bezierMovement(bezierPts, time_s);
-    //TODO: Set up the transform hierarchies for the three objects!
-
+    vec3 bezier_movement = bezierMovement(bezierPts, bTime);
     float x_bat_movement = bezier_movement[0];
     float y_bat_movement = bezier_movement[1];
+    bat.draw(x_bat_movement, y_bat_movement, wingFlap, bTime);
+    glDisable(GL_BLEND);
+}
 
-    bat.draw(x_bat_movement, y_bat_movement, wingFlap, scale*time_s);
+void drawMoon()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    Transform TRS = Transform::Identity();
+    TRS *= Eigen::Translation3f(-0.75, 0.75, 0.0);
+    TRS *= Eigen::AlignedScaling3f(0.35, 0.35, 1.0);
+
+    moon.draw(TRS.matrix());
+    glDisable(GL_BLEND);
+}
+
+void drawMoonPassTwo()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    Transform TRS = Transform::Identity();
+    TRS *= Eigen::Translation3f(-0.75, 0.75, 0.0);
+    TRS *= Eigen::AlignedScaling3f(0.20, 0.20, 1.0);
+    moon.draw(TRS.matrix());
+    glDisable(GL_BLEND);
+}
+
+void display(){
+    opengp::update_title_fps("FrameBuffer");
+    glViewport(0,0,width,height);
+
+    // TODO: First draw the scene onto framebuffer,
+    // then use screen quad to add effects!
+    ///--- Render to FB
+    fb.bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        drawMoon();
+    fb.unbind();
+    // fb.display_color_attachment("FB - Color"); ///< debug
+
+    ///--- Render to Window
+    glViewport(0, 0, width, height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    squad.draw();
+    drawScene(glfwGetTime());
+    drawMoonPassTwo();
 }
 
 int main(int, char**){
-    glfwInitWindowSize(748, 748);
-    glfwCreateWindow("bat");
-    glfwDisplayFunc(display);
+    /// GLFW Initialization
+    if( !glfwInit() ){
+        fprintf( stderr, "Failed to initialize GLFW\n" );
+        return EXIT_FAILURE;
+    }
+
+    /// Hint GLFW that we would like an OpenGL 3 context (at least)
+    /// http://www.glfw.org/faq.html#41__how_do_i_create_an_opengl_30_context
+    /// This may cause problems on a laptop Intel on-board graphics card
+    /// When you have a dedicated graphics cards, enable these lines
+    /// to have more powerful features of openGL!!
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 2);
+    glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    /// Attempt to open the window: fails if required version unavailable
+    /// @note some Intel GPUs do not support OpenGL 3.2
+    /// @note update the driver of your graphic card
+    if( !glfwOpenWindow(width, height, 0,0,0,0, 32,0, GLFW_WINDOW ) ){
+        fprintf( stderr, "Failed to open OpenGL 3.2 GLFW window.\n" );
+        glfwTerminate();
+        return EXIT_FAILURE;
+    }
+
+    /// GLEW Initialization (must have a context)
+    glewExperimental = true; ///<
+    if( glewInit() != GLEW_NO_ERROR ){
+        fprintf( stderr, "Failed to initialize GLEW\n");
+        return EXIT_FAILURE;
+    }
+
+    /// Set window title
+    glfwSetWindowTitle("Loading Framebuffer....");
+    std::cout << "OpenGL" << glGetString(GL_VERSION) << std::endl;
+
+    /// Initialize our OpenGL program
     init();
-    glfwMainLoop();
-    bat.cleanup();
-    return EXIT_SUCCESS;
+
+    /// Render loop & keyboard input
+    while(glfwGetKey(GLFW_KEY_ESC)!=GLFW_PRESS && glfwGetWindowParam(GLFW_OPENED)){
+        display();
+        glfwSwapBuffers();
+    }
+
+    /// Close OpenGL window and terminate GLFW
+    glfwTerminate();
+    exit( EXIT_SUCCESS );
 }

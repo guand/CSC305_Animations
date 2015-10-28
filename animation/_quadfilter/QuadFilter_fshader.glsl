@@ -4,10 +4,9 @@ uniform float tex_width;
 uniform float tex_height;
 in vec2 uv;
 out vec3 color;
-uniform float offset[5] = float[] (0.0, 1.0, 2.0, 3.0, 4.0);
-uniform float weight[5] = float[] (0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162);
 
-//#define GAUSSIAN
+
+#define GAUSSIAN
 //#define SOBEL
 
 #ifdef SOBEL
@@ -21,18 +20,12 @@ void main() {
     // float std = .1; ///< standard deviation (<.3 disable)
     vec3 color_tot = vec3(0,0,0);
     float weight_tot = 0;
-    color = texture(tex, vec2(gl_FragCoord)/1024.0) * weight[0];
-    for(int i = 1; i < 5; i++) {
-        color += texture(tex, (vec2(gl_FragCoord)+vec2(0.0, offset[i])/1024.0)) * weight[i];
-        color += texture(tex, (vec2(gl_FragCoord)-vec2(0.0, offset[i])/1024.0)) * weight[i];
-    }
-
     int SIZE = 1 + 2 * 3 * int( ceil(std) );
     for(int i=-SIZE; i<=SIZE; i++){
         for(int j=-SIZE; j<=SIZE; j++){
             float w = exp(-(i*i+j*j)/(2.0*std*std*std*std));
             vec3 neigh_color = texture(tex, uv+vec2(i/tex_width,j/tex_height)).rgb;
-            color_tot += w * neigh_color;
+            color_tot += w * neigh_color; 
             weight_tot += w;
         }
     }
@@ -57,6 +50,6 @@ void main() {
     color = vec3(G, G, G);
 #endif
 // No processing: using this line
-color = texture(tex,uv).rgb;
+//color = texture(tex,uv).rgb;
 }
 

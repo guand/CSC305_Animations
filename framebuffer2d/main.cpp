@@ -15,7 +15,7 @@ ScreenQuad squad;
 
 void init(){
     glClearColor(1,1,1, /*solid*/1.0 );
-    foreground.init("_quad/nyancat.tga");
+    foreground.init("_quad/bat.tga");
     background.init("_quad/background.tga");
 
     // TODO: initialize framebuffer (see slides)
@@ -41,7 +41,6 @@ void drawScene(float timeCount)
     TRS *= Eigen::AlignedScaling3f(0.285, 0.2, 1);
     foreground.draw(TRS.matrix());
     glDisable(GL_BLEND);
-
 }
 
 void display(){ 
@@ -61,7 +60,7 @@ void display(){
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     squad.draw();
-    drawScene(glfwGetTime());
+//    drawScene(glfwGetTime());
 }
 
 int main(int, char**){

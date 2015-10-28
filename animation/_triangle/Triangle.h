@@ -9,7 +9,7 @@ private:
 public:
     void init(){
         ///--- Compile the shaders
-        _pid = opengp::load_shaders("Triangle/vshader.glsl", "Triangle/fshader.glsl");
+        _pid = opengp::load_shaders("_triangle/vshader.glsl", "_triangle/fshader.glsl");
         if(!_pid) exit(EXIT_FAILURE);       
         glUseProgram(_pid);
         

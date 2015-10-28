@@ -4,10 +4,11 @@ uniform float tex_width;
 uniform float tex_height;
 in vec2 uv;
 out vec3 color;
-uniform float offset[5] = float[] (0.0, 1.0, 2.0, 3.0, 4.0);
-uniform float weight[5] = float[] (0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162);
+uniform float offset[3] = float[] (0.0, 1.3846153846, 3.2307692308);
+uniform float weight[5] = float[] (0.2270270270, 0.1945946, 0.1216216, 0.054054, 0.016216);
 
-//#define GAUSSIAN
+
+#define GAUSSIAN
 //#define SOBEL
 
 #ifdef SOBEL
@@ -16,17 +17,35 @@ float rgb_2_luma(vec3 c){ return .3*c[0] + .59*c[1] + .11*c[2]; }
 
 void main() {
 #ifdef GAUSSIAN
+//    vec2 texel = uv;
+//    vec3 bloom = vec3(0, 0, 0);
+//    int count = 0;
+//    for(int i = -4; i < 4; i++)
+//    {
+//        for(int j = -3; j < 3; j++)
+//        {
+//            bloom += texture(tex, texel + vec2(i, j) * 0.004).rgb * 0.25;
+//        }
+//    }
+//    if(texture(tex, texel).r < 0.3)
+//    {
+//        color = bloom * bloom * 0.012 + texture(tex, texel).rgb;
+//    } else
+//    {
+//        if(texture(tex, uv).r < 0.5)
+//        {
+//            color = bloom * bloom *0.009 + texture(tex, texel).rgb;
+//        } else
+//        {
+//            color = bloom * bloom * 0.0075 + texture(tex, texel).rgb;
+//        }
+//    }
+
     ///--- Gaussian convolution
-    float std = 2; ///< standard deviation (<.3 disable)
+    float std = 3; ///< standard deviation (<.3 disable)
     // float std = .1; ///< standard deviation (<.3 disable)
     vec3 color_tot = vec3(0,0,0);
     float weight_tot = 0;
-    color = texture(tex, vec2(gl_FragCoord)/1024.0) * weight[0];
-    for(int i = 1; i < 5; i++) {
-        color += texture(tex, (vec2(gl_FragCoord)+vec2(0.0, offset[i])/1024.0)) * weight[i];
-        color += texture(tex, (vec2(gl_FragCoord)-vec2(0.0, offset[i])/1024.0)) * weight[i];
-    }
-
     int SIZE = 1 + 2 * 3 * int( ceil(std) );
     for(int i=-SIZE; i<=SIZE; i++){
         for(int j=-SIZE; j<=SIZE; j++){
@@ -57,6 +76,6 @@ void main() {
     color = vec3(G, G, G);
 #endif
 // No processing: using this line
-color = texture(tex,uv).rgb;
+//color = texture(tex,uv).rgb;
 }
 
