@@ -102,25 +102,17 @@ private:
      * @return vector3f
      * get interpolation of all the points recursively for the bezier curve
      */
-    vec3 getCasteljauVector(vec3 pt1, vec3 pt2, vec3 pt3, vec3 pt4, vec3 pt5, vec3 pt6, const float t)
+    vec3 getCasteljauVector(vector<vec3> pts, const float t)
     {
-        vec3 aTob, bToc, cTod, dToe, eTof, abTobc, bcTocd, cdTode, deToef, abbcTobccd, bccdTocdde, cddeTodeef,
-        abbcbccdTobccdcdde, bccdcddeTocddedeef;
-        aTob = lerp(pt1, pt2, t);
-        bToc = lerp(pt2, pt3, t);
-        cTod = lerp(pt3, pt4, t);
-        dToe = lerp(pt4, pt5, t);
-        eTof = lerp(pt5, pt6, t);
-        abTobc = lerp(aTob, bToc, t);
-        bcTocd = lerp(bToc, cTod, t);
-        cdTode = lerp(cTod, dToe, t);
-        deToef = lerp(dToe, eTof, t);
-        abbcTobccd = lerp(abTobc, bcTocd, t);
-        bccdTocdde = lerp(bcTocd, cdTode, t);
-        cddeTodeef = lerp(cdTode, deToef, t);
-        abbcbccdTobccdcdde = lerp(abbcTobccd, bccdTocdde, t);
-        bccdcddeTocddedeef = lerp(bccdTocdde, cddeTodeef, t);
-        return lerp(abbcbccdTobccdcdde, bccdcddeTocddedeef, t);
+        vector<vec3> newPts;
+        if(pts.size() < 2)
+            return pts.at(0);
+        for(int i = 1; i < pts.size(); i++)
+        {
+            vec3 interp = lerp(pts.at(i-1), pts.at(i), t);
+            newPts.push_back(interp);
+        }
+        return getCasteljauVector(newPts, t);
     }
 
     /**
@@ -132,9 +124,16 @@ private:
     {
         float dt = 1.0 / _uNum;
         float t = 0.0;
+        vector<vec3> casteljauVector;
+        casteljauVector.push_back(p.p1());
+        casteljauVector.push_back(p.p2());
+        casteljauVector.push_back(p.p3());
+        casteljauVector.push_back(p.p4());
+        casteljauVector.push_back(p.p5());
+        casteljauVector.push_back(p.p6());
         for(int i = 0; i <= _uNum; i++)
         {
-            vec3 point = getCasteljauVector(p.p1(), p.p2(), p.p3(), p.p4(), p.p5(), p.p6(), t);
+            vec3 point = getCasteljauVector(casteljauVector, t);
             _vertices.push_back(point);
             t += dt;
         }
